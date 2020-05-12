@@ -246,7 +246,7 @@ public abstract class Schema extends JsonProperties implements Serializable {
 
   /** Create a union schema. */
   public static Schema createUnion(List<Schema> types) {
-    return new UnionSchema(new LockableArrayList<>(types));
+    return new UnionSchema(new LockableArrayList<>(types), false);
   }
 
   /** Create a union schema. */
@@ -1195,7 +1195,7 @@ public abstract class Schema extends JsonProperties implements Serializable {
     private final List<Schema> types;
     private final Map<String, Integer> indexByName;
 
-    public UnionSchema(LockableArrayList<Schema> types) {
+    public UnionSchema(LockableArrayList<Schema> types, boolean fromAliases) {
       super(Type.UNION);
       this.indexByName = new HashMap<>(Math.multiplyExact(2, types.size()));
       this.types = types.lock();
@@ -1208,7 +1208,7 @@ public abstract class Schema extends JsonProperties implements Serializable {
         if (name == null) {
           throw new AvroRuntimeException("Nameless in union:" + this);
         }
-        if (indexByName.put(name, index++) != null) {
+        if (indexByName.put(name, index++) != null && !fromAliases) {
           throw new AvroRuntimeException("Duplicate in union:" + name);
         }
       }
@@ -1779,7 +1779,7 @@ public abstract class Schema extends JsonProperties implements Serializable {
       LockableArrayList<Schema> types = new LockableArrayList<>(schema.size());
       for (JsonNode typeNode : schema)
         types.add(parse(typeNode, names));
-      return new UnionSchema(types);
+      return new UnionSchema(types, false);
     } else {
       throw new SchemaParseException("Schema not yet supported: " + schema);
     }
@@ -1902,7 +1902,7 @@ public abstract class Schema extends JsonProperties implements Serializable {
       List<Schema> types = new ArrayList<>();
       for (Schema branch : s.getTypes())
         types.add(applyAliases(branch, seen, aliases, fieldAliases));
-      result = Schema.createUnion(types);
+      result = new UnionSchema(new LockableArrayList<>(types), true);
       break;
     case FIXED:
       if (aliases.containsKey(name))
