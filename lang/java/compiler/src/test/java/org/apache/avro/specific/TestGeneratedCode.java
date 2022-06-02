@@ -36,6 +36,7 @@ import org.junit.Test;
 
 import org.apache.avro.specific.test.FullRecordV1;
 import org.apache.avro.specific.test.FullRecordV2;
+import org.apache.avro.specific.test.OrderedFields;
 
 public class TestGeneratedCode {
 
@@ -86,5 +87,25 @@ public class TestGeneratedCode {
 
     FullRecordV1 expected = new FullRecordV1(true, 87231, 731L, 54.2832F, 38.0, null, "Hello, world!");
     Assert.assertEquals(expected, dst);
+  }
+
+  @Test
+  public void ignoredFields() {
+    OrderedFields r1 = new OrderedFields(true, 92091, 3443L, 83.0232F);
+    OrderedFields r2 = OrderedFields.newBuilder(r1).build();
+    Assert.assertEquals(r1, r2);
+    Assert.assertEquals(r1.hashCode(), r2.hashCode());
+    r2 = OrderedFields.newBuilder(r1).setB(false).build();
+    Assert.assertNotEquals(r1, r2);
+    Assert.assertNotEquals(r1.hashCode(), r2.hashCode());
+    r2 = OrderedFields.newBuilder(r1).setI32(92092).build();
+    Assert.assertNotEquals(r1, r2);
+    Assert.assertNotEquals(r1.hashCode(), r2.hashCode());
+    r2 = OrderedFields.newBuilder(r1).setI64(3444L).build();
+    Assert.assertNotEquals(r1, r2);
+    Assert.assertNotEquals(r1.hashCode(), r2.hashCode());
+    r2 = OrderedFields.newBuilder(r1).setF32(83.0233F).build();
+    Assert.assertEquals(r1, r2);
+    Assert.assertEquals(r1.hashCode(), r2.hashCode());
   }
 }
