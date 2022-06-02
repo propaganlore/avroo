@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "SpecificBasicRecord",
+  "namespace": "org.apache.avro.perf.test.specific.avro",
+  "doc": "Matches org.apache.avro.perf.test.BasicRecord",
+  "fields": [
+    { "name": "f1", "type": "double" },
+    { "name": "f2", "type": "double" },
+    { "name": "f3", "type": "double" },
+    { "name": "f4", "type": "int" },
+    { "name": "f5", "type": "int" },
+    { "name": "f6", "type": "int" }
+  ]
+}

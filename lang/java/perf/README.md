@@ -11,12 +11,13 @@ usage: Perf [--help] [--mi <measurementIterations>] [--test <test>] [--wi <warmu
 
 ### Test Suites
 
-| Test Suite             | Package                        |
-| ---------------------- |:------------------------------:|
-| Native Type Tests      | org.apache.avro.perf.test.basic.*   |
-| Generic Datum Tests    | org.apache.avro.perf.test.generic.* |
-| Record Tests           | org.apache.avro.perf.test.record.*  |
-| Reflection Datum Tests | org.apache.avro.perf.test.reflect.* |
+| Test Suite             | Package                              |
+|------------------------|--------------------------------------|
+| Native Type Tests      | org.apache.avro.perf.test.basic.*    |
+| Generic Datum Tests    | org.apache.avro.perf.test.generic.*  |
+| Record Tests           | org.apache.avro.perf.test.record.*   |
+| Reflection Datum Tests | org.apache.avro.perf.test.reflect.*  |
+| Specific Record Tests  | org.apache.avro.perf.test.specific.* |
 
 
 ### Examples

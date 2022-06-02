@@ -18,6 +18,8 @@
 
 package org.apache.avro.perf.test;
 
+import org.apache.avro.perf.test.specific.avro.SpecificBasicRecord;
+
 import java.util.Random;
 
 public final class BasicRecord {
@@ -39,5 +41,10 @@ public final class BasicRecord {
     f4 = r.nextInt();
     f5 = r.nextInt();
     f6 = r.nextInt();
+  }
+
+  public static SpecificBasicRecord newSpecific(final Random r) {
+    return new SpecificBasicRecord(r.nextDouble(), r.nextDouble(), r.nextDouble(), r.nextInt(), r.nextInt(),
+        r.nextInt());
   }
 }
