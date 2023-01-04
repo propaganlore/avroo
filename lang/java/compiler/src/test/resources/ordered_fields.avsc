@@ -1,0 +1,23 @@
+{
+  "type" : "record",
+  "name" : "OrderedFields",
+  "doc" : "Generates record with ordered fields",
+  "namespace" : "org.apache.avro.specific.test",
+  "fields" : [ {
+    "name" : "b",
+    "type" : "boolean"
+  }, {
+    "name" : "i32",
+    "type" : "int",
+    "order": "ascending"
+  }, {
+    "name" : "i64",
+    "type" : "long",
+    "order": "descending"
+  }, {
+    "name" : "f32",
+    "type" : "float",
+    "order": "ignore"
+  }]
+}
+

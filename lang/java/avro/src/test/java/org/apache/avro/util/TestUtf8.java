@@ -99,6 +99,15 @@ public class TestUtf8 {
   }
 
   @Test
+  public void testHashCodeSameAsString() {
+    assertEquals("a".hashCode(), new Utf8("a").hashCode());
+    assertEquals("zz".hashCode(), new Utf8("zz").hashCode());
+    assertEquals("z".hashCode(), new Utf8("z").hashCode());
+    assertEquals("hello".hashCode(), new Utf8("hello").hashCode());
+    assertEquals("hell".hashCode(), new Utf8("hell").hashCode());
+  }
+
+  @Test
   public void testSerialization() throws IOException, ClassNotFoundException {
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bos)) {
