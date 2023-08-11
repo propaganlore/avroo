@@ -199,16 +199,22 @@ impl<'b> ser::Serializer for &'b mut Serializer {
 
     fn serialize_unit_variant(
         self,
-        _: &'static str,
+        _enum_name: &'static str,
         index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
-        Ok(Value::Enum(index, variant.to_string()))
+        Ok(Value::Record(vec![
+            ("type".to_owned(), Value::Enum(index, variant.to_string())),
+            (
+                "value".to_owned(),
+                Value::Union(index, Box::new(Value::Null)),
+            ),
+        ]))
     }
 
     fn serialize_newtype_struct<T: ?Sized>(
         self,
-        _: &'static str,
+        _enum_name: &'static str,
         value: &T,
     ) -> Result<Self::Ok, Self::Error>
     where
@@ -219,7 +225,7 @@ impl<'b> ser::Serializer for &'b mut Serializer {
 
     fn serialize_newtype_variant<T: ?Sized>(
         self,
-        _: &'static str,
+        _enum_name: &'static str,
         index: u32,
         variant: &'static str,
         value: &T,
@@ -227,12 +233,15 @@ impl<'b> ser::Serializer for &'b mut Serializer {
     where
         T: Serialize,
     {
+        let serialized = value.serialize(self)?;
+        let idx = match serialized {
+            // assumes that the Null variant is always the first one, as in Avro's Union
+            Value::Null => 0,
+            _ => index,
+        };
         Ok(Value::Record(vec![
             ("type".to_owned(), Value::Enum(index, variant.to_owned())),
-            (
-                "value".to_owned(),
-                Value::Union(index, Box::new(value.serialize(self)?)),
-            ),
+            ("value".to_owned(), Value::Union(idx, Box::new(serialized))),
         ]))
     }
 
@@ -254,7 +263,7 @@ impl<'b> ser::Serializer for &'b mut Serializer {
 
     fn serialize_tuple_variant(
         self,
-        _: &'static str,
+        _enum_name: &'static str,
         index: u32,
         variant: &'static str,
         len: usize,
@@ -343,24 +352,30 @@ impl<'a> ser::SerializeSeq for SeqVariantSerializer<'a> {
     type Ok = Value;
     type Error = Error;
 
-    fn serialize_element<T: ?Sized>(&mut self, value: &T) -> Result<(), Self::Error>
+    fn serialize_element<T>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize,
+        T: Serialize + ?Sized,
     {
-        self.items.push(Value::Union(
-            self.index,
-            Box::new(value.serialize(&mut Serializer::default())?),
-        ));
+        self.items
+            .push(value.serialize(&mut Serializer::default())?);
         Ok(())
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
+        let value = if self.items.is_empty() {
+            Value::Null
+        } else {
+            Value::Array(self.items)
+        };
         Ok(Value::Record(vec![
             (
                 "type".to_owned(),
                 Value::Enum(self.index, self.variant.to_owned()),
             ),
-            ("value".to_owned(), Value::Array(self.items)),
+            (
+                "value".to_owned(),
+                Value::Union(self.index, Box::new(value)),
+            ),
         ]))
     }
 }
@@ -395,7 +410,9 @@ impl ser::SerializeMap for MapSerializer {
             self.indices.insert(key, self.values.len());
             Ok(())
         } else {
-            Err(ser::Error::custom("map key is not a string"))
+            Err(ser::Error::custom(format!(
+                "Expected Map's key to be a String, but got {key:?}"
+            )))
         }
     }
 
@@ -464,6 +481,11 @@ impl<'a> ser::SerializeStructVariant for StructVariantSerializer<'a> {
     }
 
     fn end(self) -> Result<Self::Ok, Self::Error> {
+        let value = if self.fields.is_empty() {
+            Value::Null
+        } else {
+            Value::Record(self.fields)
+        };
         Ok(Value::Record(vec![
             (
                 "type".to_owned(),
@@ -471,7 +493,7 @@ impl<'a> ser::SerializeStructVariant for StructVariantSerializer<'a> {
             ),
             (
                 "value".to_owned(),
-                Value::Union(self.index, Box::new(Value::Record(self.fields))),
+                Value::Union(self.index, Box::new(value)),
             ),
         ]))
     }
@@ -720,7 +742,13 @@ mod tests {
             a: UnitExternalEnum::Val1,
         };
 
-        let expected = Value::Record(vec![("a".to_owned(), Value::Enum(0, "Val1".to_owned()))]);
+        let expected = Value::Record(vec![(
+            "a".to_owned(),
+            Value::Record(vec![
+                ("type".to_owned(), Value::Enum(0, "Val1".to_owned())),
+                ("value".to_owned(), Value::Union(0, Box::new(Value::Null))),
+            ]),
+        )]);
 
         assert_eq!(
             to_value(test)?,
@@ -961,11 +989,14 @@ mod tests {
                 ("type".to_owned(), Value::Enum(1, "Val2".to_owned())),
                 (
                     "value".to_owned(),
-                    Value::Array(vec![
-                        Value::Union(1, Box::new(Value::Float(1.0))),
-                        Value::Union(1, Box::new(Value::Float(2.0))),
-                        Value::Union(1, Box::new(Value::Float(3.0))),
-                    ]),
+                    Value::Union(
+                        1,
+                        Box::new(Value::Array(vec![
+                            Value::Float(1.0),
+                            Value::Float(2.0),
+                            Value::Float(3.0),
+                        ])),
+                    ),
                 ),
             ]),
         )]);
