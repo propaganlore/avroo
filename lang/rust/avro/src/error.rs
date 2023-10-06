@@ -16,6 +16,7 @@
 // under the License.
 
 use crate::{
+    decimal::DecimalParsingError,
     schema::{Name, SchemaKind},
     types::ValueKind,
 };
@@ -132,6 +133,9 @@ pub enum Error {
 
     #[error("Precision {precision} too small to hold decimal values with {num_bytes} bytes")]
     ComparePrecisionAndSize { precision: usize, num_bytes: usize },
+
+    #[error("Precision {precision} too small to afford decimal with {digits} digits")]
+    ComparePrecisionAndLength { precision: usize, digits: usize },
 
     #[error("Cannot convert length to i32: {1}")]
     ConvertLengthToI32(#[source] std::num::TryFromIntError, usize),
@@ -466,6 +470,9 @@ pub enum Error {
 
     #[error("Invalid Avro data! Cannot read codec type from value that is not Value::Bytes.")]
     BadCodecMetadata,
+
+    #[error("Decimal could not be parsed")]
+    DecimalParsing(#[from] DecimalParsingError),
 }
 
 impl serde::ser::Error for Error {
