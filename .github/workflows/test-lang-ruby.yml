@@ -34,25 +34,41 @@ concurrency:
 
 jobs:
   test:
-    name: Ruby ${{ matrix.ruby }} Tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest]
         ruby:
         - '2.7'
         - '3.0'
         - '3.1'
         - '3.2'
         - '3.3'
+        include:
+          - os: ["self-hosted", "asf-arm"]
+            ruby: ''
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
+      - name: Apt Update
+        run: |
+          sudo apt-get update -qq
+
+      - if: matrix.os != 'ubuntu-latest'
+        name: Setup Ruby 
+        run: |
+          sudo apt-get install -qqy ruby${{ matrix.ruby }}
+
+      - if: matrix.os == 'ubuntu-latest'
+        name: Setup Ruby 
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
 
       - name: Install Dependencies
-        run: sudo apt-get install -qqy libsnappy-dev
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qqy bundler libsnappy-dev libyaml-dev
 
       - uses: actions/cache@v4
         with:
@@ -75,10 +91,10 @@ jobs:
           ./build.sh test
 
   interop:
-    name: Ruby ${{ matrix.ruby }} Interop
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest]
         ruby:
         - '2.7'
         - '3.0'
@@ -87,6 +103,10 @@ jobs:
         - '3.3'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Apt Update
+        run: |
+          sudo apt-get update -qq
 
       - uses: ruby/setup-ruby@v1
         with:

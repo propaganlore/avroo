@@ -34,16 +34,30 @@ concurrency:
 
 jobs:
   test:
-    name: Perl ${{ matrix.perl }} Tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        perl:
-        - '5.32'
+        include:
+          - os: ubuntu-latest
+            perl: '5.32'
+          - os: ["self-hosted", "asf-arm"]
+            perl: ''
+        
     steps:
       - uses: actions/checkout@v4
 
-      - uses: shogo82148/actions-setup-perl@v1
+      - name: Apt update
+        run: |
+          sudo apt-get update -qq
+
+      - if: matrix.os != 'ubuntu-latest'
+        name: Setup Perl
+        run: |
+          sudo apt-get install -qy --no-install-recommends perl${{ matrix.perl }} cpanminus
+
+      - if: matrix.os == 'ubuntu-latest'
+        name: Setup Perl
+        uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
 
@@ -80,12 +94,12 @@ jobs:
         run: ./build.sh test
 
   interop:
-    name: Perl ${{ matrix.perl }} Interop
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        perl:
-        - '5.32'
+        include:
+          - os: ubuntu-latest
+            perl: '5.32'
     steps:
       - uses: actions/checkout@v4
 

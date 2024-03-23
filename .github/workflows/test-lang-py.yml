@@ -34,11 +34,11 @@ concurrency:
 
 jobs:
   test:
-    name: Python ${{ matrix.python }} Tests
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python:
         - '3.11'
         - '3.10'
@@ -49,22 +49,32 @@ jobs:
         - 'pypy-3.8'
         - 'pypy-3.9'
         - 'pypy-3.10'
+        include:
+          - os: ["self-hosted", "asf-arm"]
+            python: '3'
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-
       - name: Apt Install Compression Libs
         run: |
+          sudo apt-get update -qq
           sudo apt-get install -qqy --no-install-recommends libbz2-dev \
                                                             libjansson-dev \
                                                             liblzma-dev \
                                                             libsnappy-dev \
                                                             libzstd-dev
+
+      - if: matrix.os != 'ubuntu-latest'
+        name: Setup Python
+        run: |
+          sudo apt-get install -qqy --no-install-recommends python${{ matrix.python }}
+
+      - if: matrix.os == 'ubuntu-latest'
+        name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
 
       - name: Install Dependencies
         run: |
@@ -82,11 +92,11 @@ jobs:
         run: python3 -m tox -e py
 
   interop:
-    name: Python ${{ matrix.python }} Interop
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python:
         - '3.11'
         - '3.10'
@@ -100,6 +110,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Apt Update
+        run: |
+          sudo apt-get update -qq
 
       - name: Setup Python
         uses: actions/setup-python@v5

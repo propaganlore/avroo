@@ -34,13 +34,24 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ["self-hosted", "asf-arm"]]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Add libzstd
-        shell: bash
-        run: sudo apt-get install -y libzstd-dev
+      - name: Install packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qqy libzstd-dev libicu-dev
+
+      # On the hosted ARM runner, we need to create the dotnet directory and change the owner to the current user
+      - if: matrix.os != 'ubuntu-latest'
+        name: Install dependencies
+        run: |
+          sudo mkdir -p /usr/share/dotnet
+          sudo chown -R $(id -u):$(id -g) /usr/share/dotnet
 
       - name: Install .NET SDKs
         uses: actions/setup-dotnet@v4
@@ -66,7 +77,10 @@ jobs:
         run: ./build.sh test
 
   interop:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
