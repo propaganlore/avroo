@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="$(BenchmarkDotNetVersion)" />
+    <PackageReference Include="System.CodeDom" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,7 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="schema\**" CopyToOutputDirectory="PreserveNewest"/>
+    <None Include="schema\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
